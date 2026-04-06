@@ -1,0 +1,6 @@
+aws_region        = "eu-central-1"
+project_name      = "two-tier-app"
+environment       = "lab"
+db_password       = "CHANGE_ME"
+domain_name       = "example.com"
+create_www_record = true
