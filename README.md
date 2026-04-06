@@ -1,6 +1,8 @@
-# Two-Tier AWS Application (Terraform)
+#  Two-Tier AWS Application (Terraform)
 
 This project provisions a production-like two-tier architecture on AWS using Terraform.
+
+---
 
 ## 🏗 Architecture
 
@@ -56,7 +58,7 @@ terraform apply
 
 ## 📁 Variables
 
-Create your own:
+Create your own variables file:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
@@ -79,24 +81,85 @@ db_password = "your_secure_password"
 
 ---
 
-## 🧠 What This Project Demonstrates
+## ✅ Verification / Expected Results
 
-* Infrastructure as Code (Terraform)
-* AWS networking (VPC, subnets, routing)
-* Secure architecture (private EC2 + RDS)
-* DNS + TLS (Route53 + ACM)
-* Load balancing & high availability
-* SSM instead of SSH (modern AWS approach)
+After successful deployment, open the application in your browser:
+
+```text
+https://your-domain.com
+```
+
+### Expected responses
+
+#### `/`
+
+Should return JSON similar to:
+
+```json
+{"message":"hello from private app node","hostname":"ip-10-0-11-213"}
+```
+
+#### `/health`
+
+Should return:
+
+```text
+OK
+```
+
+#### `/db`
+
+Should return JSON similar to:
+
+```json
+{"visits":1}
+```
+
+Repeated calls to `/db` should increase the counter.
 
 ---
 
-# Aplikacja Two-Tier na AWS (Terraform)
+## 🔎 Testing with curl
+
+### Main endpoint
+
+```bash
+curl -i https://your-domain.com/
+```
+
+### Health check
+
+```bash
+curl -i https://your-domain.com/health
+```
+
+### Database connectivity
+
+```bash
+curl -i https://your-domain.com/db
+```
+
+---
+
+## Expected behavior
+
+* `/` confirms that the app is running behind the load balancer
+* `/health` confirms that health checks are working
+* `/db` confirms that the application can connect to PostgreSQL
+
+---
+
+---
+
+#  Aplikacja Two-Tier na AWS (Terraform)
 
 Projekt tworzy architekturę typu two-tier w AWS przy użyciu Terraform.
 
+---
+
 ## 🏗 Architektura
 
-* **ALB (Application Load Balancer)** – publiczny punkt wejścia
+* **ALB (Application Load Balancer)** – publiczny punkt wejścia (HTTP → HTTPS)
 * **EC2** – prywatna podsieć, aplikacja Flask w Dockerze
 * **RDS (PostgreSQL)** – baza danych w prywatnej podsieci
 * **Route53** – DNS
@@ -105,7 +168,7 @@ Projekt tworzy architekturę typu two-tier w AWS przy użyciu Terraform.
 
 ### Przepływ ruchu
 
-User → Route53 → ALB → EC2 → RDS
+User → Route53 → ALB (HTTPS) → EC2 → RDS
 
 ---
 
@@ -118,13 +181,13 @@ Wymagana własna domena (np. Namecheap).
 1. Utwórz Hosted Zone w Route53
 2. Skopiuj nameservery (NS)
 3. Podmień je u dostawcy domeny
-4. Poczekaj na propagację DNS
+4. Poczekaj na propagację DNS (~5–30 min)
 
 Terraform:
 
 * utworzy certyfikat ACM
 * zwaliduje domenę przez DNS
-* stworzy rekord A do ALB
+* stworzy rekord A (alias) wskazujący na ALB
 
 ---
 
@@ -132,7 +195,7 @@ Terraform:
 
 * TLS kończy się na ALB
 * certyfikat zarządzany przez ACM
-* HTTP → przekierowanie na HTTPS
+* HTTP (port 80) przekierowuje na HTTPS (443)
 
 ---
 
@@ -168,19 +231,64 @@ db_password = "haslo"
 
 ---
 
-## 🧠 Co pokazuje projekt
+## ✅ Weryfikacja / Oczekiwane wyniki
 
-* Terraform (IaC)
-* AWS networking
-* prywatna architektura (EC2 + RDS)
-* DNS + HTTPS
-* load balancing
-* SSM zamiast SSH
+Po wdrożeniu otwórz aplikację w przeglądarce:
+
+```text
+https://twojadomena.pl
+```
+
+### Co powinno się wyświetlić
+
+#### `/`
+
+JSON podobny do:
+
+```json
+{"message":"hello from private app node","hostname":"ip-10-0-11-213"}
+```
+
+#### `/health`
+
+```text
+OK
+```
+
+#### `/db`
+
+```json
+{"visits":1}
+```
+
+Kolejne wywołania `/db` zwiększają licznik.
 
 ---
 
+## 🔎 Testowanie przez curl
 
+### Główny endpoint
 
+```bash
+curl -i https://twojadomena.pl/
+```
 
+### Health check
 
+```bash
+curl -i https://twojadomena.pl/health
+```
 
+### Test bazy danych
+
+```bash
+curl -i https://twojadomena.pl/db
+```
+
+---
+
+## Co to potwierdza
+
+* `/` → aplikacja działa za load balancerem
+* `/health` → health check działa poprawnie
+* `/db` → aplikacja łączy się z PostgreSQL
